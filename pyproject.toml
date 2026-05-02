@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "subito-it-tracker"
+version = "0.1.0"
+description = "Subito.it python tracker"
+authors = [{name = "Marco Fontana", email = "ciabadiale@gmail.com"}]
+dependencies = ["requests"]
+
+[project.scripts]
+subito-it-tracker = "subito_it_tracker.main:main"
