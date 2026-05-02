@@ -1,4 +1,6 @@
+venv
+build
 *.sqlite*
 *.db*
 *__pycache__*
-venv
+*.egg-info
