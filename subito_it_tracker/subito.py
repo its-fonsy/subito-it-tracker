@@ -29,12 +29,12 @@ class SubitoQuery:
 
 class SubitoItem:
     def __init__(self) -> None:
-        self.title: str = None
-        self.price: int = None
-        self.date: str = None
-        self.geo: str = None
-        self.url: str = None
-        self.tracked: bool = None
+        self.title: str | None = None
+        self.price: int | None = None
+        self.date: str | None = None
+        self.geo: str | None = None
+        self.url: str | None = None
+        self.tracked: bool | None = None
 
     def from_dict(self, data: dict) -> None:
         self.title = data["title"]
@@ -64,6 +64,8 @@ class SubitoItem:
         return string
 
     def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SubitoItem):
+            return False
         return self.title == other.title and \
             self.price == other.price and \
             self.date == other.date and \
@@ -79,7 +81,7 @@ class SubitoApi:
     def search(self, query: SubitoQuery) -> list[SubitoItem]:
 
         if not query:
-            return None
+            return []
 
         result_list = []
         url = "https://www.subito.it/hades/v1/search/items"
