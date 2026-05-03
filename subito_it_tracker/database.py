@@ -1,15 +1,24 @@
+import os
 import sqlite3
+from pathlib import Path
 from .subito import SubitoItem, SubitoQuery
 
 
+def _get_db_path() -> str:
+    xdg = os.environ.get("XDG_DATA_HOME")
+    data_dir = Path(xdg if xdg else Path.home() / ".local/share") / "subito-it-tracker"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return str(data_dir / "subito_tracker.sqlite3")
+
+
 class Database:
-    def __init__(self, db_path: str = "subito.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str | None = None) -> None:
+        self.db_path = db_path if db_path else _get_db_path()
         self.conn = sqlite3.connect(self.db_path)
         self.conn.row_factory = sqlite3.Row
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         self.conn.executescript(
             """
             CREATE TABLE IF NOT EXISTS queries (
@@ -71,7 +80,7 @@ class Database:
 
         return query_ids
 
-    def get_query(self, query_id: int) -> SubitoQuery:
+    def get_query(self, query_id: int) -> SubitoQuery | None:
 
         row = self.conn.execute("SELECT * FROM queries WHERE id = ?",
                                 (query_id,)).fetchone()
@@ -133,7 +142,7 @@ class Database:
         ).fetchall()
         return [self._row_to_result(row) for row in rows]
 
-    def set_tracked(self, item_id: int, tracked: bool):
+    def set_tracked(self, item_id: int, tracked: bool) -> None:
         self.conn.execute(
             "UPDATE items SET tracked = ? WHERE id = ?",
             (int(tracked), item_id)
@@ -152,11 +161,11 @@ class Database:
         })
         return result
 
-    def close(self):
+    def close(self) -> None:
         self.conn.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "Database":
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, *_: object) -> None:
         self.close()

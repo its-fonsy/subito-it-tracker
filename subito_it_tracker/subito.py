@@ -3,24 +3,24 @@ import json
 
 
 class SubitoQuery:
-    def __init__(self, title=None, text=None, min=None, max=None):
+    def __init__(self, title: str | None = None, text: str | None = None, min: int | None = None, max: int | None = None) -> None:
         self.text = text
         self.title = title
         self.max_price = max
         self.min_price = min
 
-    def get_text(self):
+    def get_text(self) -> str | None:
         return self.text
 
-    def get_title(self):
+    def get_title(self) -> str | None:
         return self.title
 
-    def price_is_in_range(self, price):
+    def price_is_in_range(self, price: int) -> bool:
         max = self.max_price or 99999999
         min = self.min_price or 0
         return price <= max and price >= min
 
-    def from_dict(self, data):
+    def from_dict(self, data: dict) -> None:
         self.text = data["text"]
         self.title = data["title"]
         self.max_price = data["max_price"]
@@ -28,7 +28,7 @@ class SubitoQuery:
 
 
 class SubitoItem:
-    def __init__(self):
+    def __init__(self) -> None:
         self.title: str = None
         self.price: int = None
         self.date: str = None
@@ -36,7 +36,7 @@ class SubitoItem:
         self.url: str = None
         self.tracked: bool = None
 
-    def from_dict(self, data):
+    def from_dict(self, data: dict) -> None:
         self.title = data["title"]
         self.price = data["price"]
         self.date = data["date"]
@@ -44,7 +44,7 @@ class SubitoItem:
         self.url = data["url"]
         self.tracked = data["tracked"]
 
-    def dump(self):
+    def dump(self) -> str:
         dump = f"Title = {self.title}\n"
         dump += f"Price = {self.price}\n"
         dump += f"Date = {self.date}\n"
@@ -53,17 +53,17 @@ class SubitoItem:
         dump += f"Tracked = {self.tracked}"
         return dump
 
-    def is_tracked(self):
+    def is_tracked(self) -> bool:
         return self.tracked
 
-    def __str__(self):
+    def __str__(self) -> str:
         string = f"{self.date.split()[0]}"
         string += f" {int(self.price)} EUR"
         string += f" {self.geo},"
         string += f" {self.title}"
         return string
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.title == other.title and \
             self.price == other.price and \
             self.date == other.date and \

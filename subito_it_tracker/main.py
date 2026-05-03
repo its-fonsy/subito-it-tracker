@@ -4,7 +4,7 @@ from .subito import SubitoApi, SubitoQuery
 from .database import Database
 
 
-def user_confirm(question: str):
+def user_confirm(question: str) -> bool:
     ans = input(question)
     if ans.lower() in ["y", "yes"]:
         return True
@@ -12,7 +12,7 @@ def user_confirm(question: str):
         return False
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Subito.it item tracker.")
     subparsers = parser.add_subparsers(dest="command")
 
@@ -95,7 +95,7 @@ def list_all_queries(database: Database):
               query.min_price}, max={query.max_price}]")
 
 
-def list_tracked_items(database: Database, query_id: int):
+def list_tracked_items(database: Database, query_id: int | None) -> None:
     queries_id_list = []
 
     if query_id:
@@ -150,11 +150,11 @@ def update_all_queries(database: Database, api: SubitoApi):
             database.remove_item(item_id)
 
 
-def main():
+def main() -> None:
     args = parse_arguments()
     api = SubitoApi()
 
-    with Database("subito.sqlite3") as db:
+    with Database() as db:
         if args.command == "add":
             add_query(db, api)
         elif args.command == "remove":
