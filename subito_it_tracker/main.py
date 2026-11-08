@@ -1,20 +1,23 @@
 import argparse
 
-from .subito import SubitoApi, SubitoQuery
+from . import __version__
+from .subito import SubitoApi, SubitoQuery, MAX_PRICE
 from .database import Database
 
 
 def user_confirm(question: str) -> bool:
     ans = input(question)
-    if ans.lower() in ["y", "yes"]:
-        return True
-    else:
-        return False
+    return ans.lower() in ["y", "yes"]
 
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Subito.it item tracker.")
     subparsers = parser.add_subparsers(dest="command")
+
+    # Version
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"%(prog)s {__version__}"
+    )
 
     # Add
     subparsers.add_parser("add", help="Add a new query")
@@ -61,15 +64,12 @@ def add_query(database: Database, api: SubitoApi):
     min_price = int(input("Minimum price (0 = skip): "))
     max_price = int(input("Maximum price (0 = skip): "))
 
-    min_price = min_price if min_price > 0 else None
-    max_price = max_price if max_price > 0 else None
+    min_price = max(0, min_price)
+    max_price = min(max_price, MAX_PRICE)
 
     if user_confirm("Confirm (y/N)? "):
         query = SubitoQuery(title, query, min_price, max_price)
         id = database.insert_query(query)
-        items = api.search(query)
-        for item in items:
-            database.insert_item(item, id)
         print(f"Query {query.title} added with id={id}")
     else:
         print("Abort.")
@@ -92,6 +92,11 @@ def list_all_queries(database: Database):
 
     for id in query_id_list:
         query = database.get_query(id)
+
+        if not query:
+            print(f"Query {id} does not exist")
+            return
+
         print(f"({id}) {query.title} [min={query.min_price}, max={query.max_price}]")
 
 
@@ -129,17 +134,27 @@ def update_all_queries(database: Database, api: SubitoApi):
         query = database.get_query(query_id)
         item_to_remove = database.get_all_item_of_query(query_id)
 
-        # Add new items to the databse
+        if not query:
+            continue
+
+        # Search for ADV
+        print(f"Search for query: {query.title}")
         results = api.search(query)
+
+        # Remove ADV that doesn't meet requirements
+        print(f"Found {len(results)} ADS that fulfill requirements.")
         for item in results:
             new_entry = database.insert_item(item, query_id)
+
             if new_entry:
                 question = f'New item: {item.price} EUR "{item.title}" {
                     item.geo
                 }.\nAdd to the list of tracked items? (y/N) '
+
                 if user_confirm(question):
                     item_id = database.get_item_id(item, query_id)
                     database.set_tracked(item_id, True)
+
             else:
                 item_to_remove.remove(item)
 

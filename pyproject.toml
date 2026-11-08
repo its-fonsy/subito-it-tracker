@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "subito-it-tracker"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Subito.it python tracker"
 authors = [{name = "Marco Fontana", email = "ciabadiale@gmail.com"}]
 dependencies = ["requests"]
 
 [project.scripts]
 subito-it-tracker = "subito_it_tracker.main:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "subito_it_tracker.__version__" }
