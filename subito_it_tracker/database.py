@@ -47,7 +47,7 @@ class Database:
     def insert_query(self, query: SubitoQuery) -> int:
         cur = self.conn.execute(
             "INSERT INTO queries (title, text, min_price, max_price) VALUES (?, ?, ?, ?)",
-            (query.title, query.text, query.min_price, query.max_price)
+            (query.title, query.text, query.min_price, query.max_price),
         )
         self.conn.commit()
         return cur.lastrowid
@@ -82,8 +82,9 @@ class Database:
 
     def get_query(self, query_id: int) -> SubitoQuery | None:
 
-        row = self.conn.execute("SELECT * FROM queries WHERE id = ?",
-                                (query_id,)).fetchone()
+        row = self.conn.execute(
+            "SELECT * FROM queries WHERE id = ?", (query_id,)
+        ).fetchone()
 
         if not row:
             return None
@@ -101,8 +102,15 @@ class Database:
                 INSERT INTO items (query_id, title, price, date, geo, url, tracked)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (query_id, item.title, item.price, item.date,
-                 item.geo, item.url, int(item.tracked))
+                (
+                    query_id,
+                    item.title,
+                    item.price,
+                    item.date,
+                    item.geo,
+                    item.url,
+                    int(item.tracked),
+                ),
             )
             self.conn.commit()
             return True
@@ -118,47 +126,47 @@ class Database:
         row = self.conn.execute(
             """SELECT id FROM items WHERE query_id = ? AND title = ?
             AND price = ? AND date = ? AND geo = ? AND url = ?""",
-            (query_id, item.title, item.price, item.date, item.geo, item.url)
+            (query_id, item.title, item.price, item.date, item.geo, item.url),
         ).fetchone()
 
         return row["id"]
 
     def get_item(self, item_id: int) -> SubitoItem:
         row = self.conn.execute(
-            "SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
+            "SELECT * FROM items WHERE id = ?", (item_id,)
+        ).fetchone()
         return self._row_to_result(row)
 
     def get_all_item_of_query(self, query_id: int) -> list[SubitoItem]:
         rows = self.conn.execute(
-            "SELECT * FROM items WHERE query_id = ?",
-            (query_id,)
+            "SELECT * FROM items WHERE query_id = ?", (query_id,)
         ).fetchall()
         return [self._row_to_result(row) for row in rows]
 
     def get_tracked_items_of_query(self, query_id: int) -> list[SubitoItem]:
         rows = self.conn.execute(
-            "SELECT * FROM items WHERE query_id = ? AND tracked = 1",
-            (query_id,)
+            "SELECT * FROM items WHERE query_id = ? AND tracked = 1", (query_id,)
         ).fetchall()
         return [self._row_to_result(row) for row in rows]
 
     def set_tracked(self, item_id: int, tracked: bool) -> None:
         self.conn.execute(
-            "UPDATE items SET tracked = ? WHERE id = ?",
-            (int(tracked), item_id)
+            "UPDATE items SET tracked = ? WHERE id = ?", (int(tracked), item_id)
         )
         self.conn.commit()
 
     def _row_to_result(self, row: sqlite3.Row) -> SubitoItem:
         result = SubitoItem()
-        result.from_dict({
-            "title":   row["title"],
-            "price":   row["price"],
-            "date":    row["date"],
-            "geo":     row["geo"],
-            "url":     row["url"],
-            "tracked": bool(row["tracked"]),
-        })
+        result.from_dict(
+            {
+                "title": row["title"],
+                "price": row["price"],
+                "date": row["date"],
+                "geo": row["geo"],
+                "url": row["url"],
+                "tracked": bool(row["tracked"]),
+            }
+        )
         return result
 
     def close(self) -> None:

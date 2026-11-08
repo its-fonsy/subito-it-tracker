@@ -3,7 +3,13 @@ import json
 
 
 class SubitoQuery:
-    def __init__(self, title: str | None = None, text: str | None = None, min: int | None = None, max: int | None = None) -> None:
+    def __init__(
+        self,
+        title: str | None = None,
+        text: str | None = None,
+        min: int | None = None,
+        max: int | None = None,
+    ) -> None:
         self.text = text
         self.title = title
         self.max_price = max
@@ -66,15 +72,16 @@ class SubitoItem:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SubitoItem):
             return False
-        return self.title == other.title and \
-            self.price == other.price and \
-            self.date == other.date and \
-            self.geo == other.geo and \
-            self.url == other.url
+        return (
+            self.title == other.title
+            and self.price == other.price
+            and self.date == other.date
+            and self.geo == other.geo
+            and self.url == other.url
+        )
 
 
 class SubitoApi:
-
     def __init__(self):
         pass
 
@@ -87,7 +94,7 @@ class SubitoApi:
         url = "https://www.subito.it/hades/v1/search/items"
         headers = {
             "Accept": "application/json, text/plain, */*",
-            "X-Subito-Environment-ID": ""
+            "X-Subito-Environment-ID": "",
         }
         querystring = {
             "q": query.get_text(),
@@ -98,15 +105,16 @@ class SubitoApi:
             "urg": "false",
             "sort": "datedesc",
             "lim": 100,
-            "start": 0
+            "start": 0,
         }
 
-        raw_response = requests.request("GET", url, data="",
-                                        headers=headers, params=querystring)
+        raw_response = requests.request(
+            "GET", url, data="", headers=headers, params=querystring
+        )
 
         dict_response = json.loads(raw_response.text)
         data = {}
-        for ad in dict_response['ads']:
+        for ad in dict_response["ads"]:
             it = SubitoItem()
 
             price = None
@@ -121,7 +129,7 @@ class SubitoApi:
             town = ad["geo"]["town"]["friendly_name"]
             city = ad["geo"]["city"]["short_name"]
 
-            data["title"] = ad['subject']
+            data["title"] = ad["subject"]
             data["price"] = price
             data["date"] = ad["dates"]["display"]
             data["geo"] = f"{town} ({city})"

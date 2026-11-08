@@ -20,11 +20,10 @@ def parse_arguments() -> argparse.Namespace:
     subparsers.add_parser("add", help="Add a new query")
 
     # Remove query
-    remove_query_parser = subparsers.add_parser(
-        "remove", help="Remove a query")
-    remove_query_parser.add_argument("id", type=int, nargs="?",
-                                     default=None,
-                                     help="ID of the query to remove")
+    remove_query_parser = subparsers.add_parser("remove", help="Remove a query")
+    remove_query_parser.add_argument(
+        "id", type=int, nargs="?", default=None, help="ID of the query to remove"
+    )
 
     # Update
     subparsers.add_parser("update", help="Update all queries")
@@ -34,21 +33,23 @@ def parse_arguments() -> argparse.Namespace:
 
     # tracked items of query
     tracked_parser = subparsers.add_parser(
-        "tracked", help="Show tracked items from a query")
-    tracked_parser.add_argument("id", type=int, nargs="?", default=None,
-                                help="ID of the query to track")
+        "tracked", help="Show tracked items from a query"
+    )
+    tracked_parser.add_argument(
+        "id", type=int, nargs="?", default=None, help="ID of the query to track"
+    )
 
     # Untrack item
     untrack_item_parser = subparsers.add_parser(
-        "untrack", help="Remove an item from the track list")
-    untrack_item_parser.add_argument(
-        "id", type=int, help="ID of the item to untrack")
+        "untrack", help="Remove an item from the track list"
+    )
+    untrack_item_parser.add_argument("id", type=int, help="ID of the item to untrack")
 
     # item dump
     item_parser = subparsers.add_parser(
-        "item", help="Show all information about an item")
-    item_parser.add_argument(
-        "id", type=int, help="ID of the item to dump")
+        "item", help="Show all information about an item"
+    )
+    item_parser.add_argument("id", type=int, help="ID of the item to dump")
 
     return parser.parse_args()
 
@@ -91,8 +92,7 @@ def list_all_queries(database: Database):
 
     for id in query_id_list:
         query = database.get_query(id)
-        print(f"({id}) {query.title} [min={
-              query.min_price}, max={query.max_price}]")
+        print(f"({id}) {query.title} [min={query.min_price}, max={query.max_price}]")
 
 
 def list_tracked_items(database: Database, query_id: int | None) -> None:
@@ -111,7 +111,7 @@ def list_tracked_items(database: Database, query_id: int | None) -> None:
             continue
 
         items = database.get_tracked_items_of_query(qid)
-        print(f"Tracked items for ({qid}) \"{query.title}\":")
+        print(f'Tracked items for ({qid}) "{query.title}":')
         for item in items:
             item_id = database.get_item_id(item, qid)
             print(f"    ({item_id}) {item}")
@@ -134,8 +134,9 @@ def update_all_queries(database: Database, api: SubitoApi):
         for item in results:
             new_entry = database.insert_item(item, query_id)
             if new_entry:
-                question = f"New item: {item.price} EUR \"{item.title}\" {
-                    item.geo}.\nAdd to the list of tracked items? (y/N) "
+                question = f'New item: {item.price} EUR "{item.title}" {
+                    item.geo
+                }.\nAdd to the list of tracked items? (y/N) '
                 if user_confirm(question):
                     item_id = database.get_item_id(item, query_id)
                     database.set_tracked(item_id, True)
@@ -146,7 +147,7 @@ def update_all_queries(database: Database, api: SubitoApi):
         for item in item_to_remove:
             item_id = database.get_item_id(item, query_id)
             if item.is_tracked():
-                print(f"Item \"{item.title}\" has been probably sold")
+                print(f'Item "{item.title}" has been probably sold')
             database.remove_item(item_id)
 
 
