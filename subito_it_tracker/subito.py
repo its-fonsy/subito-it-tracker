@@ -1,7 +1,7 @@
-import requests
-import json
 import copy
+import json
 
+import requests
 
 MAX_PRICE = 99999999
 

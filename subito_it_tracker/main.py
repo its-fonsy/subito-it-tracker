@@ -1,16 +1,17 @@
 import argparse
+
 from . import __version__
-from .subito import SubitoApi
 from .command import (
     CommandAddQuery,
-    CommandQuit,
-    CommandHelp,
-    CommandRemoveQuery,
-    CommandListTrackedItemsOfQuery,
-    CommandListQuery,
     CommandGetTrackedItemInfo,
+    CommandHelp,
+    CommandListQuery,
+    CommandListTrackedItemsOfQuery,
+    CommandQuit,
+    CommandRemoveQuery,
     CommandUpdateAllQueries,
 )
+from .subito import SubitoApi
 
 
 def parse_arguments() -> argparse.Namespace:

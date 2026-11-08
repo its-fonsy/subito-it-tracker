@@ -1,5 +1,5 @@
-from .subito import SubitoApi, SubitoQuery, MAX_PRICE
 from .database import Database
+from .subito import MAX_PRICE, SubitoApi, SubitoQuery
 
 
 class CommandError(Exception):
