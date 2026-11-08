@@ -1,16 +1,7 @@
 import argparse
 
 from . import __version__
-from .command import (
-    CommandAddQuery,
-    CommandGetTrackedItemInfo,
-    CommandHelp,
-    CommandListQuery,
-    CommandListTrackedItemsOfQuery,
-    CommandQuit,
-    CommandRemoveQuery,
-    CommandUpdateAllQueries,
-)
+from .command import CommandList
 from .subito import SubitoApi
 
 
@@ -22,47 +13,20 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-
+def main():
     parse_arguments()
 
     api = SubitoApi()
-    commands = {
-        "add": CommandAddQuery(api),
-        "remove": CommandRemoveQuery(),
-        "queries": CommandListQuery(),
-        "track": CommandListTrackedItemsOfQuery(),
-        "info": CommandGetTrackedItemInfo(),
-        "update": CommandUpdateAllQueries(api),
-        "quit": CommandQuit(),
-        "help": CommandHelp(),
-    }
-    user_input = ""
+    commands = CommandList(api)
 
-    while user_input not in ["quit"]:
+    while True:
         try:
             user_input = input("tracker> ")
-            if not user_input:
-                continue
         except KeyboardInterrupt:
             print()
             break
 
-        user_cmd = user_input.split()[0]
-
-        # Check if command is valid
-        if user_cmd not in commands:
-            print(f"Invalid command `{user_cmd}`. Type 'help' for a list of commands.")
-            continue
-
-        # Help command
-        if user_cmd == "help":
-            print("Available commands:")
-            for name, cmd in commands.items():
-                print(f"  {name.ljust(10)}{cmd.help_string}")
-            continue
-
-        commands[user_cmd].run()
+        commands.run_command(user_input)
 
 
 if __name__ == "__main__":

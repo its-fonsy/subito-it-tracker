@@ -1,3 +1,5 @@
+import sys
+
 from .database import Database
 from .subito import MAX_PRICE, SubitoApi, SubitoQuery
 
@@ -126,10 +128,20 @@ class CommandQuit(CommandTemplate):
     def __init__(self):
         self.help_string = "Quit from the program."
 
+    def execute(self):
+        sys.exit(0)
+
 
 class CommandHelp(CommandTemplate):
     def __init__(self):
         self.help_string = "List all available commands."
+        self.message = ""
+
+    def set_message(self, help_message):
+        self.message = help_message
+
+    def execute(self):
+        print(self.message)
 
 
 class CommandRemoveQuery(CommandTemplate):
@@ -242,3 +254,72 @@ class CommandUpdateAllQueries(CommandTemplate):
                     if item.is_tracked():
                         print(f'Item "{item.title}" has been probably sold.')
                     db.remove_item(item_id)
+
+
+class CommandList:
+    def __init__(self, api: SubitoApi):
+        self.commands = {
+            "add": CommandAddQuery(api),
+            "remove": CommandRemoveQuery(),
+            "queries": CommandListQuery(),
+            "track": CommandListTrackedItemsOfQuery(),
+            "info": CommandGetTrackedItemInfo(),
+            "update": CommandUpdateAllQueries(api),
+            "quit": CommandQuit(),
+            "help": CommandHelp(),
+        }
+
+        self.command_callers = {
+            "add": self.commands["add"],
+            "a": self.commands["add"],
+            "remove": self.commands["remove"],
+            "rm": self.commands["remove"],
+            "r": self.commands["remove"],
+            "queries": self.commands["queries"],
+            "q": self.commands["queries"],
+            "track": self.commands["track"],
+            "t": self.commands["track"],
+            "info": self.commands["info"],
+            "i": self.commands["info"],
+            "update": self.commands["update"],
+            "u": self.commands["update"],
+            "quit": self.commands["quit"],
+            "exit": self.commands["quit"],
+            "e": self.commands["quit"],
+            "help": self.commands["help"],
+            "h": self.commands["help"],
+        }
+
+        self.commands["help"].set_message(self.generate_help_message())
+        self.quitting: bool = False
+
+    def is_command(self, input: str):
+        return input in self.command_callers
+
+    def generate_help_message(self):
+
+        msg = "Available commands:"
+
+        for cmd_obj in self.commands.values():
+            callers = []
+            for caller_key, caller_val in self.command_callers.items():
+                if caller_val == cmd_obj:
+                    callers.append(caller_key)
+
+            msg += "\n  " + ", ".join(callers).ljust(20)
+            msg += cmd_obj.help_string
+
+        return msg
+
+    def run_command(self, input: str):
+
+        if not input:
+            return
+
+        user_cmd = input.split()[0]
+
+        if user_cmd not in self.command_callers:
+            print(f"Invalid command '{input}'. Type 'help' for a list of commands.")
+            return
+
+        self.command_callers[user_cmd].run()
