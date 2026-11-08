@@ -37,8 +37,9 @@ class Database:
                 date     TEXT,
                 geo      TEXT,
                 url      TEXT,
+                aid      TEXT,
                 tracked  INTEGER DEFAULT 0,
-                UNIQUE(title, price, date, geo, url)
+                UNIQUE(title, price, date, geo, url, aid)
             );
             """
         )
@@ -99,8 +100,8 @@ class Database:
         try:
             self.conn.execute(
                 """
-                INSERT INTO items (query_id, title, price, date, geo, url, tracked)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO items (query_id, title, price, date, geo, url, aid, tracked)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     query_id,
@@ -109,6 +110,7 @@ class Database:
                     item.date,
                     item.geo,
                     item.url,
+                    item.aid,
                     int(item.tracked),
                 ),
             )
@@ -124,9 +126,8 @@ class Database:
 
     def get_item_id(self, item: SubitoItem, query_id: int) -> int:
         row = self.conn.execute(
-            """SELECT id FROM items WHERE query_id = ? AND title = ?
-            AND price = ? AND date = ? AND geo = ? AND url = ?""",
-            (query_id, item.title, item.price, item.date, item.geo, item.url),
+            """SELECT id FROM items WHERE query_id = ? AND aid = ?""",
+            (query_id, item.aid),
         ).fetchone()
 
         return row["id"]
@@ -164,6 +165,7 @@ class Database:
                 "date": row["date"],
                 "geo": row["geo"],
                 "url": row["url"],
+                "aid": row["aid"],
                 "tracked": bool(row["tracked"]),
             }
         )

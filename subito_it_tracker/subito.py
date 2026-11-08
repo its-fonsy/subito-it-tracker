@@ -1,54 +1,68 @@
 import requests
 import json
+import copy
+
+
+MAX_PRICE = 99999999
 
 
 class SubitoQuery:
     def __init__(
         self,
-        title: str | None = None,
-        text: str | None = None,
-        min: int | None = None,
-        max: int | None = None,
+        title: str = "",
+        text: str = "",
+        min: int = -1,
+        max: int = MAX_PRICE,
     ) -> None:
-        self.text = text
-        self.title = title
-        self.max_price = max
-        self.min_price = min
+        self.text = text or ""
+        self.title = title or ""
+        self.max_price = max or MAX_PRICE
+        self.min_price = min or 0
 
-    def get_text(self) -> str | None:
+    def get_text(self) -> str:
         return self.text
 
-    def get_title(self) -> str | None:
+    def get_title(self) -> str:
         return self.title
 
     def price_is_in_range(self, price: int) -> bool:
-        max = self.max_price or 99999999
+        max = self.max_price or MAX_PRICE
         min = self.min_price or 0
         return price <= max and price >= min
 
     def from_dict(self, data: dict) -> None:
-        self.text = data["text"]
-        self.title = data["title"]
-        self.max_price = data["max_price"]
-        self.min_price = data["min_price"]
+        self.text = data["text"] or ""
+        self.title = data["title"] or ""
+        self.max_price = data["max_price"] or MAX_PRICE
+        self.min_price = data["min_price"] or 0
 
 
 class SubitoItem:
     def __init__(self) -> None:
-        self.title: str | None = None
-        self.price: int | None = None
-        self.date: str | None = None
-        self.geo: str | None = None
-        self.url: str | None = None
-        self.tracked: bool | None = None
+        self.aid: str = ""
+        self.title: str = ""
+        self.price: int = MAX_PRICE
+        self.date: str = ""
+        self.geo: str = ""
+        self.url: str = ""
+        self.tracked: bool = False
+
+    def reset(self) -> None:
+        self.title = ""
+        self.price = MAX_PRICE
+        self.date = ""
+        self.geo = ""
+        self.url = ""
+        self.tracked = False
 
     def from_dict(self, data: dict) -> None:
-        self.title = data["title"]
-        self.price = data["price"]
-        self.date = data["date"]
-        self.geo = data["geo"]
-        self.url = data["url"]
-        self.tracked = data["tracked"]
+        self.aid = data["aid"] or ""
+        self.title = data["title"] or ""
+        self.price = data["price"] or MAX_PRICE
+        self.date = data["date"] or ""
+        self.geo = data["geo"] or ""
+        self.url = data["url"] or ""
+        self.tracked = data["tracked"] or False
 
     def dump(self) -> str:
         dump = f"Title = {self.title}\n"
@@ -56,6 +70,7 @@ class SubitoItem:
         dump += f"Date = {self.date}\n"
         dump += f"Geo = {self.geo}\n"
         dump += f"Url = {self.url}\n"
+        dump += f"Id = {self.aid}\n"
         dump += f"Tracked = {self.tracked}"
         return dump
 
@@ -72,13 +87,7 @@ class SubitoItem:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SubitoItem):
             return False
-        return (
-            self.title == other.title
-            and self.price == other.price
-            and self.date == other.date
-            and self.geo == other.geo
-            and self.url == other.url
-        )
+        return self.aid == other.aid
 
 
 class SubitoApi:
@@ -87,10 +96,6 @@ class SubitoApi:
 
     def search(self, query: SubitoQuery) -> list[SubitoItem]:
 
-        if not query:
-            return []
-
-        result_list = []
         url = "https://www.subito.it/hades/v1/search/items"
         headers = {
             "Accept": "application/json, text/plain, */*",
@@ -108,35 +113,50 @@ class SubitoApi:
             "start": 0,
         }
 
+        # Send request
         raw_response = requests.request(
             "GET", url, data="", headers=headers, params=querystring
         )
 
         dict_response = json.loads(raw_response.text)
         data = {}
-        for ad in dict_response["ads"]:
-            it = SubitoItem()
+        result_list = []
 
-            price = None
-            for feature in ad["features"]:
-                if feature["uri"] == "/price":
-                    price = int(feature["values"][0]["key"])
-                    break
+        # Parse all the AD found
+        it = SubitoItem()
+        for ad in dict_response["ads"]:
+            it.reset()
+
+            # Get the price from the AD
+            price = 0
+            try:
+                for feature in ad["features"]:
+                    if feature["uri"] == "/price":
+                        price = int(feature["values"][0]["key"])
+                        break
+            except Exception as e:
+                print(f"Warning: can't find price for {ad['subject']}, error {e}")
+                continue
 
             if not price or not query.price_is_in_range(price):
                 continue
 
-            town = ad["geo"]["town"]["friendly_name"]
-            city = ad["geo"]["city"]["short_name"]
+            try:
+                town = ad["geo"]["town"]["friendly_name"]
+                city = ad["geo"]["city"]["short_name"]
 
-            data["title"] = ad["subject"]
-            data["price"] = price
-            data["date"] = ad["dates"]["display"]
-            data["geo"] = f"{town} ({city})"
-            data["url"] = ad["urls"]["default"]
-            data["tracked"] = False
+                data["title"] = ad["subject"]
+                data["aid"] = ad["urn"].split(":")[2]
+                data["price"] = price
+                data["date"] = ad["dates"]["display"]
+                data["geo"] = f"{town} ({city})"
+                data["url"] = ad["urls"]["default"]
+                data["tracked"] = False
+            except Exception as e:
+                print(f"Warning: can required metadata, error {e}")
+                continue
 
             it.from_dict(data)
-            result_list.append(it)
+            result_list.append(copy.copy(it))
 
         return result_list
