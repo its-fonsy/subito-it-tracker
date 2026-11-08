@@ -132,13 +132,17 @@ class Database:
 
         return row["id"]
 
-    def get_item(self, item_id: int) -> SubitoItem:
+    def get_item(self, item_id: int) -> SubitoItem | None:
         row = self.conn.execute(
             "SELECT * FROM items WHERE id = ?", (item_id,)
         ).fetchone()
+
+        if not row:
+            return None
+
         return self._row_to_result(row)
 
-    def get_all_item_of_query(self, query_id: int) -> list[SubitoItem]:
+    def get_all_items_of_query(self, query_id: int) -> list[SubitoItem]:
         rows = self.conn.execute(
             "SELECT * FROM items WHERE query_id = ?", (query_id,)
         ).fetchall()
