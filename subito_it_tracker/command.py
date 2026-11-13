@@ -1,3 +1,4 @@
+import sqlite3
 import sys
 
 from .database import Database
@@ -118,7 +119,10 @@ class CommandAddQuery(CommandTemplate):
         if self.user_confirm("Confirm (y/N)? "):
             query = SubitoQuery(title, query, min_price, max_price)
             with Database() as db:
-                id = db.insert_query(query)
+                try:
+                    id = db.insert_query(query)
+                except sqlite3.IntegrityError as e:
+                    raise QueryError(f"can't add query: {e}")
             print(f"Query '{query.title}' added with id {id}")
         else:
             print("Abort.")

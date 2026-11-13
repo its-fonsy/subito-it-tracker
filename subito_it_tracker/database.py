@@ -49,7 +49,7 @@ class Database:
     def insert_query(self, query: SubitoQuery) -> int:
         cur = self.conn.execute(
             "INSERT INTO queries (title, text, min_price, max_price) VALUES (?, ?, ?, ?)",
-            (query.title, query.text, query.min_price, query.max_price),
+            (query.title, query.text, float(query.min_price), float(query.max_price)),
         )
         self.conn.commit()
         return cur.lastrowid
